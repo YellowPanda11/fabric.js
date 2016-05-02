@@ -13,7 +13,7 @@
      */
     _shouldGroup: function(e, target) {
       var activeObject = this.getActiveObject();
-      return e.shiftKey && target && target.selectable &&
+      return e[this.selectionKey] && target && target.selectable &&
             (this.getActiveGroup() || (activeObject && activeObject !== target))
             && this.selection;
     },
@@ -56,7 +56,6 @@
       if (activeGroup.contains(target)) {
 
         activeGroup.removeWithUpdate(target);
-        this._resetObjectTransform(activeGroup);
         target.set('active', false);
 
         if (activeGroup.size() === 1) {
@@ -69,7 +68,6 @@
       }
       else {
         activeGroup.addWithUpdate(target);
-        this._resetObjectTransform(activeGroup);
       }
       this.fire('selection:created', { target: activeGroup, e: e });
       activeGroup.set('active', true);

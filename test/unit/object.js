@@ -545,7 +545,6 @@ test('getBoundingRectWithStroke', function() {
     }
 
     var dummyContext = canvas.getContext('2d');
-  //  initElement
 
     ok(typeof cObj.drawBorders == 'function');
     equal(cObj.drawBorders(dummyContext), cObj, 'chainable');
@@ -754,6 +753,17 @@ test('toDataURL & reference to canvas', function() {
     object.set('left', 112.45);
     object.toggle('left');
     equal(object.get('left'), 112.45, 'non boolean properties should not be affected');
+  });
+
+  test('_setLineDash', function() {
+    var object = new fabric.Rect({ left: 100, top: 124, width: 210, height: 66, stroke: 'black', strokeWidth: 2});
+    ok(typeof object._setLineDash === 'function');
+
+    canvas.add(object);
+    object.strokeDashArray = [3, 2, 1];
+    equal(object.strokeDashArray.length, 3, 'strokeDash array is odd');
+    canvas.renderAll();
+    equal(object.strokeDashArray.length, 6, 'strokeDash array now is even');
   });
 
   test('straighten', function() {

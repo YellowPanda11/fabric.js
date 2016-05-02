@@ -1,8 +1,12 @@
 var fs = require('fs'),
-    execSync = require('execSync').exec;
+    //execSync = require('execSync').exec;
+    execSync = require('child_process').execSync;
 
 var modules = [
   'text',
+  'itext',
+  'textbox',
+  'animation',
   'gestures',
   'easing',
   'parser',
