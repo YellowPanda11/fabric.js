@@ -11,7 +11,7 @@
    * @memberOf fabric.Image.filters
    * @extends fabric.Image.filters.BaseFilter
    * @see {@link fabric.Image.filters.Convolute#initialize} for constructor definition
-   * @see {@link http://fabricjs.com/image-filters/|ImageFilters demo}
+   * @see {@link http://fabricjs.com/image-filters|ImageFilters demo}
    * @example <caption>Sharpen filter</caption>
    * var filter = new fabric.Image.filters.Convolute({
    *   matrix: [ 0, -1,  0,
@@ -71,16 +71,6 @@
         0, 1, 0,
         0, 0, 0
       ];
-
-      var canvasEl = fabric.util.createCanvasElement();
-      this.tmpCtx = canvasEl.getContext('2d');
-    },
-
-    /**
-     * @private
-     */
-    _createImageData: function(w, h) {
-      return this.tmpCtx.createImageData(w, h);
     },
 
     /**
@@ -98,39 +88,32 @@
           src = pixels.data,
           sw = pixels.width,
           sh = pixels.height,
-
-          // pad output by the convolution matrix
-          w = sw,
-          h = sh,
-          output = this._createImageData(w, h),
-
+          output = context.createImageData(sw, sh),
           dst = output.data,
-
           // go through the destination image pixels
-          alphaFac = this.opaque ? 1 : 0;
+          alphaFac = this.opaque ? 1 : 0,
+          r, g, b, a, dstOff,
+          scx, scy, srcOff, wt;
 
-      for (var y = 0; y < h; y++) {
-        for (var x = 0; x < w; x++) {
-          var sy = y,
-              sx = x,
-              dstOff = (y * w + x) * 4,
-              // calculate the weighed sum of the source image pixels that
-              // fall under the convolution matrix
-              r = 0, g = 0, b = 0, a = 0;
+      for (var y = 0; y < sh; y++) {
+        for (var x = 0; x < sw; x++) {
+          dstOff = (y * sw + x) * 4;
+          // calculate the weighed sum of the source image pixels that
+          // fall under the convolution matrix
+          r = 0; g = 0; b = 0; a = 0;
 
           for (var cy = 0; cy < side; cy++) {
             for (var cx = 0; cx < side; cx++) {
-
-              var scy = sy + cy - halfSide,
-                  scx = sx + cx - halfSide;
+              scy = y + cy - halfSide;
+              scx = x + cx - halfSide;
 
               /* jshint maxdepth:5 */
               if (scy < 0 || scy > sh || scx < 0 || scx > sw) {
                 continue;
               }
 
-              var srcOff = (scy * sw + scx) * 4,
-                  wt = weights[cy * side + cx];
+              srcOff = (scy * sw + scx) * 4;
+              wt = weights[cy * side + cx];
 
               r += src[srcOff] * wt;
               g += src[srcOff + 1] * wt;

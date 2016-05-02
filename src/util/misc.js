@@ -2,8 +2,8 @@
 
   var sqrt = Math.sqrt,
       atan2 = Math.atan2,
-      atan = Math.atan,
       pow = Math.pow,
+      abs = Math.abs,
       PiBy180 = Math.PI / 180;
 
   /**
@@ -73,11 +73,27 @@
      */
     rotatePoint: function(point, origin, radians) {
       point.subtractEquals(origin);
+      var v = fabric.util.rotateVector(point, radians);
+      return new fabric.Point(v.x, v.y).addEquals(origin);
+    },
+
+    /**
+     * Rotates `vector` with `radians`
+     * @static
+     * @memberOf fabric.util
+     * @param {Object} vector The vector to rotate (x and y)
+     * @param {Number} radians The radians of the angle for the rotation
+     * @return {Object} The new rotated point
+     */
+    rotateVector: function(vector, radians) {
       var sin = Math.sin(radians),
           cos = Math.cos(radians),
-          rx = point.x * cos - point.y * sin,
-          ry = point.x * sin + point.y * cos;
-      return new fabric.Point(rx, ry).addEquals(origin);
+          rx = vector.x * cos - vector.y * sin,
+          ry = vector.x * sin + vector.y * cos;
+      return {
+        x: rx,
+        y: ry
+      };
     },
 
     /**
@@ -267,7 +283,7 @@
       // https://github.com/kangax/fabric.js/commit/d0abb90f1cd5c5ef9d2a94d3fb21a22330da3e0a#commitcomment-4513767
       // see https://code.google.com/p/chromium/issues/detail?id=315152
       //     https://bugzilla.mozilla.org/show_bug.cgi?id=935069
-      if (url.indexOf('data') !== 0 && typeof crossOrigin !== 'undefined') {
+      if (url.indexOf('data') !== 0 && crossOrigin) {
         img.crossOrigin = crossOrigin;
       }
 
@@ -505,18 +521,36 @@
      * @return {Object} Components of transform
      */
     qrDecompose: function(a) {
-      var angle = atan(a[0] / a[1]),
-          denom = pow(a[0]) + pow(a[1]),
+      var angle = atan2(a[1], a[0]),
+          denom = pow(a[0], 2) + pow(a[1], 2),
           scaleX = sqrt(denom),
           scaleY = (a[0] * a[3] - a[2] * a [1]) / scaleX,
-          skewX = atan((a[0] * a[2] + a[1] * a [3]) / denom);
+          skewX = atan2(a[0] * a[2] + a[1] * a [3], denom);
       return {
-        angle: angle / PiBy180,
+        angle: angle  / PiBy180,
         scaleX: scaleX,
         scaleY: scaleY,
         skewX: skewX / PiBy180,
-        skewY: 0
+        skewY: 0,
+        translateX: a[4],
+        translateY: a[5]
       };
+    },
+
+    customTransformMatrix: function(scaleX, scaleY, skewX) {
+      var skewMatrixX = [1, 0, abs(Math.tan(skewX * PiBy180)), 1],
+          scaleMatrix = [abs(scaleX), 0, 0, abs(scaleY)];
+      return fabric.util.multiplyTransformMatrices(scaleMatrix, skewMatrixX, true);
+    },
+
+    resetObjectTransform: function (target) {
+      target.scaleX = 1;
+      target.scaleY = 1;
+      target.skewX = 0;
+      target.skewY = 0;
+      target.flipX = false;
+      target.flipY = false;
+      target.setAngle(0);
     },
 
     /**

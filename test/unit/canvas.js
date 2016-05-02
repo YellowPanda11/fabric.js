@@ -60,6 +60,11 @@
     return new fabric.Rect(fabric.util.object.extend(defaultOptions, options || { }));
   }
 
+  function makeTriangle(options) {
+    var defaultOptions = { width: 10, height: 10 };
+    return new fabric.Triangle(fabric.util.object.extend(defaultOptions, options || { }));
+  }
+
   QUnit.module('fabric.Canvas', {
     setup: function() {
       upperCanvasEl.style.display = '';
@@ -216,6 +221,133 @@
 
   test('findTarget', function() {
     ok(typeof canvas.findTarget == 'function');
+    var rect = makeRect({ left: 0, top: 0 }), target;
+    canvas.add(rect);
+    target = canvas.findTarget({
+      clientX: 5, clientY: 5
+    }, true);
+    equal(target, rect, 'Should return the rect');
+    target = canvas.findTarget({
+      clientX: 30, clientY: 30
+    }, true);
+    equal(target, null, 'Should not find target');
+    canvas.remove(rect);
+  });
+
+  test('findTarget with perPixelTargetFind', function() {
+    ok(typeof canvas.findTarget == 'function');
+    var triangle = makeTriangle({ left: 0, top: 0 }), target;
+    canvas.add(triangle);
+    target = canvas.findTarget({
+      clientX: 2, clientY: 1
+    }, true);
+    equal(target, triangle, 'Should return the triangle by bounding box');
+    //TODO find out why this stops the tests
+    //canvas.perPixelTargetFind = true;
+    //target = canvas.findTarget({
+    //  clientX: 2, clientY: 1
+    //}, true);
+    //equal(target, null, 'Should return null because of transparency checks');
+    target = canvas.findTarget({
+      clientX: 5, clientY: 5
+    }, true);
+    equal(target, triangle, 'Should return the triangle now');
+    canvas.perPixelTargetFind = false;
+    canvas.remove(triangle);
+  });
+
+  test('findTarget on activegroup', function() {
+    var rect1 = makeRect({ left: 0, top: 0 }), target;
+    var rect2 = makeRect({ left: 20, top: 0 });
+    canvas.add(rect1);
+    canvas.add(rect2);
+    var group = new fabric.Group([ rect1, rect2 ]);
+    canvas.add(group);
+    canvas.setActiveGroup(group);
+    target = canvas.findTarget({
+      clientX: 5, clientY: 5
+    }, true);
+    equal(target, group, 'Should return the activegroup');
+    //TODO: make it work with perPixelTargetFind
+  });
+
+  test('activeGroup sendToBack', function() {
+
+    var rect1 = makeRect(),
+        rect2 = makeRect(),
+        rect3 = makeRect(),
+        rect4 = makeRect();
+
+    canvas.add(rect1, rect2, rect3, rect4);
+
+    var group = new fabric.Group([ rect3, rect4 ]);
+    canvas.setActiveGroup(group);
+    equal(canvas._objects[0], rect1, 'rect1 should be last');
+    equal(canvas._objects[1], rect2, 'rect2 should be second');
+    canvas.sendToBack(group);
+    equal(canvas._objects[0], rect3, 'rect3 should be the new last');
+    equal(canvas._objects[1], rect4, 'rect3 should be the new second');
+    equal(canvas._objects[2], rect1, 'rect1 should be the third object');
+    equal(canvas._objects[3], rect2, 'rect2 should be on top now');
+  });
+  
+  test('activeGroup bringToFront', function() {
+
+    var rect1 = makeRect(),
+        rect2 = makeRect(),
+        rect3 = makeRect(),
+        rect4 = makeRect();
+
+    canvas.add(rect1, rect2, rect3, rect4);
+
+    var group = new fabric.Group([ rect1, rect2 ]);
+    canvas.setActiveGroup(group);
+    equal(canvas._objects[0], rect1, 'rect1 should be last');
+    equal(canvas._objects[1], rect2, 'rect2 should be second');
+    canvas.bringToFront(group);
+    equal(canvas._objects[0], rect3, 'rect3 should be the new last');
+    equal(canvas._objects[1], rect4, 'rect3 should be the new second');
+    equal(canvas._objects[2], rect1, 'rect1 should be the third object');
+    equal(canvas._objects[3], rect2, 'rect2 should be on top now');
+  });
+
+  test('activeGroup bringForward', function() {
+
+    var rect1 = makeRect(),
+        rect2 = makeRect(),
+        rect3 = makeRect(),
+        rect4 = makeRect();
+
+    canvas.add(rect1, rect2, rect3, rect4);
+
+    var group = new fabric.Group([ rect1, rect2 ]);
+    canvas.setActiveGroup(group);
+    equal(canvas._objects[0], rect1, 'rect1 should be last');
+    equal(canvas._objects[1], rect2, 'rect2 should be second');
+    canvas.bringForward(group);
+    equal(canvas._objects[0], rect3, 'rect3 should be the new last');
+    equal(canvas._objects[1], rect1, 'rect1 should be the new second');
+    equal(canvas._objects[2], rect2, 'rect2 should be the third object');
+    equal(canvas._objects[3], rect4, 'rect4 did not move');
+  });
+
+  test('activeGroup sendBackwards', function() {
+    var rect1 = makeRect(),
+        rect2 = makeRect(),
+        rect3 = makeRect(),
+        rect4 = makeRect();
+
+    canvas.add(rect1, rect2, rect3, rect4);
+
+    var group = new fabric.Group([ rect3, rect4 ]);
+    canvas.setActiveGroup(group);
+    equal(canvas._objects[0], rect1, 'rect1 should be last');
+    equal(canvas._objects[1], rect2, 'rect2 should be second');
+    canvas.sendBackwards(group);
+    equal(canvas._objects[0], rect1, 'rect1 is still last');
+    equal(canvas._objects[1], rect3, 'rect3 should be shifted down by 1');
+    equal(canvas._objects[2], rect4, 'rect4 should be shifted down by 1');
+    equal(canvas._objects[3], rect2, 'rect2 is the new top');
   });
 
   test('toDataURL', function() {
@@ -232,26 +364,24 @@
     }
   });
 
-  // asyncTest('getPointer', function() {
-  //   ok(typeof canvas.getPointer == 'function');
+//  asyncTest('getPointer', function() {
+//    ok(typeof canvas.getPointer == 'function');
+//
+//    fabric.util.addListener(upperCanvasEl, 'click', function(e) {
+//       canvas.calcOffset();
+//       var pointer = canvas.getPointer(e);
+//       equal(pointer.x, 101, 'pointer.x should be correct');
+//       equal(pointer.y, 102, 'pointer.y should be correct');
+//
+//       start();
+//   });
 
-  //   window.scroll(0, 0);
-
-  //   fabric.util.addListener(upperCanvasEl, 'click', function(e) {
-  //     canvas.calcOffset();
-  //     var pointer = canvas.getPointer(e);
-  //     equal(pointer.x, 101, 'pointer.x should be correct');
-  //     equal(pointer.y, 102, 'pointer.y should be correct');
-
-  //     start();
-  //   });
-
-  //   setTimeout(function() {
-  //     simulateEvent(upperCanvasEl, 'click', {
-  //       pointerX: 101, pointerY: 102
-  //     });
-  //   }, 100);
-  // });
+//     setTimeout(function() {
+//       simulateEvent(upperCanvasEl, 'click', {
+//         pointerX: 101, pointerY: 102
+//       });
+//     }, 100);
+// });
 
   test('getCenter', function() {
     ok(typeof canvas.getCenter == 'function');
@@ -873,6 +1003,49 @@
     equal(aGroup._objects[1], rect2);
     equal(aGroup._objects[2], circle1);
     equal(aGroup._objects[3], circle2);
+  });
+  
+  test('dispose', function() {
+    //made local vars to do not dispose the external canvas
+    var el = fabric.document.createElement('canvas'),
+        parentEl = fabric.document.createElement('div'),
+        wrapperEl, lowerCanvasEl, upperCanvasEl;
+    el.width = 200; el.height = 200;
+    parentEl.className = 'rootNode';
+    parentEl.appendChild(el);
+
+    equal(parentEl.firstChild, el, 'canvas should be appended at partentEl');
+    equal(parentEl.childNodes.length, 1, 'parentEl has 1 child only');
+
+    var canvas = fabric.isLikelyNode ? fabric.createCanvasForNode() : new fabric.Canvas(el);
+    wrapperEl = canvas.wrapperEl;
+    lowerCanvasEl = canvas.lowerCanvasEl;
+    upperCanvasEl = canvas.upperCanvasEl;
+    equal(parentEl.childNodes.length, 1, 'parentEl has still 1 child only');
+    equal(wrapperEl.childNodes.length, 2, 'wrapper should have 2 children');
+    equal(wrapperEl.tagName, 'DIV', 'We wrapped canvas with DIV');
+    equal(wrapperEl.className, canvas.containerClass, 'DIV class should be set');
+    equal(wrapperEl.childNodes[0], lowerCanvasEl, 'First child should be lowerCanvas');
+    equal(wrapperEl.childNodes[1], upperCanvasEl, 'Second child should be upperCanvas');
+    if (!fabric.isLikelyNode) {
+      equal(parentEl.childNodes[0], wrapperEl, 'wrapperEl is appendend to rootNode');
+    }
+    //looks like i cannot use parentNode
+    //equal(wrapperEl, lowerCanvasEl.parentNode, 'lowerCanvas is appended to wrapperEl');
+    //equal(wrapperEl, upperCanvasEl.parentNode, 'upperCanvas is appended to wrapperEl');
+    //equal(parentEl, wrapperEl.parentNode, 'wrapperEl is appendend to rootNode');
+    equal(parentEl.childNodes.length, 1, 'parent div should have 1 child');
+    notEqual(parentEl.firstChild, canvas.getElement(), 'canvas should not be parent div firstChild');
+    ok(typeof canvas.dispose == 'function');
+    canvas.add(makeRect(), makeRect(), makeRect());
+    canvas.dispose();
+    equal(canvas.getObjects().length, 0, 'dispose should clear canvas');
+    equal(parentEl.childNodes.length, 1, 'parent has always 1 child');
+    if (!fabric.isLikelyNode) {
+      equal(parentEl.childNodes[0], lowerCanvasEl, 'canvas should be back to its firstChild place');
+    }
+    equal(canvas.wrapperEl, null, 'wrapperEl should be deleted');
+    equal(canvas.upperCanvasEl, null, 'upperCanvas should be deleted');
   });
   
   // test('dispose', function() {

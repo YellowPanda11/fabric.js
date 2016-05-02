@@ -84,7 +84,9 @@ fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.protot
    */
   initMousedownHandler: function() {
     this.on('mousedown', function(options) {
-
+      if (!this.editable) {
+        return;
+      }
       var pointer = this.canvas.getPointer(options.e);
 
       this.__mousedownX = pointer.x;
@@ -122,12 +124,12 @@ fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.protot
   initMouseupHandler: function() {
     this.on('mouseup', function(options) {
       this.__isMousedown = false;
-      if (this._isObjectMoved(options.e)) {
+      if (!this.editable || this._isObjectMoved(options.e)) {
         return;
       }
 
       if (this.__lastSelected && !this.__corner) {
-        this.enterEditing();
+        this.enterEditing(options.e);
         this.initDelayedCursor(true);
       }
       this.selected = true;
@@ -178,12 +180,6 @@ fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.protot
           lineLeftOffset = this._getLineLeftOffset(widthOfLine);
 
       width = lineLeftOffset * this.scaleX;
-
-      if (this.flipX) {
-        // when oject is horizontally flipped we reverse chars
-        // we should reverse also style or do not revers at all.
-        this._textLines[i] = line.reverse().join('');
-      }
 
       for (var j = 0, jlen = line.length; j < jlen; j++) {
 
