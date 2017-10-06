@@ -2,7 +2,7 @@
   "name": "@behance/fabric",
   "description": "Object model for HTML5 canvas, and SVG-to-canvas parser. Backed by jsdom and node-canvas.",
   "homepage": "http://fabricjs.com/",
-  "version": "1.6.1",
+  "version": "1.6.1-nodeless",
   "author": "Juriy Zaytsev <kangax@gmail.com>",
   "keywords": [
     "canvas",
@@ -14,11 +14,11 @@
     "HTML5",
     "object model"
   ],
-  "browser" : {
-    "canvas" : false,
-    "fs":      false,
-    "jsdom":   false,
-    "xmldom":  false
+  "browser": {
+    "canvas": false,
+    "fs": false,
+    "jsdom": false,
+    "xmldom": false
   },
   "repository": {
     "type": "git",
