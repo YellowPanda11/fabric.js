@@ -30,6 +30,7 @@
   "license": "MIT",
   "scripts": {
     "build": "node build.js modules=ALL exclude=json,gestures",
+    "build:tiny": "node build.js modules=ALL no-svg-export exclude=json,gestures,parser,gradient,shadow,freedrawing,object_straightening,image_filters",
     "test": "node test.js",
     "lint": "jshint src && jscs src",
     "lint_tests": "jshint test/unit --config .jshintrc_tests",
