@@ -188,6 +188,54 @@
     deepEqual(fabric.Image.filters.Convolute.fromObject(object), filter);
   });
 
+  QUnit.module('fabric.Image.filters.GaussianBlur');
+
+  test('constructor', function() {
+    ok(fabric.Image.filters.GaussianBlur);
+
+    var filter = new fabric.Image.filters.GaussianBlur();
+    ok(filter instanceof fabric.Image.filters.GaussianBlur, 'should inherit from fabric.Image.filters.GaussianBlur');
+  });
+
+  test('properties', function() {
+    var filter = new fabric.Image.filters.GaussianBlur();
+
+    equal(filter.type, 'GaussianBlur');
+    equal(filter.radius, undefined);
+
+    var filter2 = new fabric.Image.filters.GaussianBlur(0.5);
+    equal(filter2.amount, 0.5);
+  });
+
+  test('applyTo', function() {
+    var filter = new fabric.Image.filters.GaussianBlur();
+    ok(typeof filter.applyTo == 'function');
+  });
+
+  test('toObject', function() {
+    var filter = new fabric.Image.filters.GaussianBlur(2);
+    ok(typeof filter.toObject == 'function');
+
+    var object = filter.toObject();
+    equal(JSON.stringify(object), '{"type":"GaussianBlur","amount":2}');
+  });
+
+  test('toJSON', function() {
+    var filter = new fabric.Image.filters.GaussianBlur(10);
+    ok(typeof filter.toJSON == 'function');
+
+    var json = filter.toJSON();
+    equal(JSON.stringify(json), '{"type":"GaussianBlur","amount":10}');
+  });
+
+  test('fromObject', function() {
+    var filter = new fabric.Image.filters.GaussianBlur();
+
+    var object = filter.toObject();
+
+    deepEqual(fabric.Image.filters.GaussianBlur.fromObject(object), filter);
+  });
+
   QUnit.module('fabric.Image.filters.GradientTransparency');
 
   test('constructor', function() {
